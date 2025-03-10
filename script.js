@@ -1,23 +1,28 @@
+const GITHUB_USERNAME = "inzz3";
+const REPO_NAME = "website";
+const FILE_PATH = "students.json"; // File to store data
+const BRANCH = "main";
+const GITHUB_TOKEN = "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"; // Replace with your token
+
 document.addEventListener("DOMContentLoaded", function () {
     const gradeForm = document.getElementById("gradeForm");
     const gradeList = document.getElementById("gradeList");
     const summary = document.getElementById("summary");
+    const saveButton = document.getElementById("saveData");
 
-    // Load existing student data from localStorage (if any)
-    let students = JSON.parse(localStorage.getItem("students")) || [];
+    let students = [];
 
-    function saveStudents() {
-        localStorage.setItem("students", JSON.stringify(students));
-    }
-
-    function loadStudents() {
-        gradeList.innerHTML = "";
-        students.forEach(student => {
-            const li = document.createElement("li");
-            li.textContent = `${student.name} - ${student.mark} - ${student.grade}`;
-            gradeList.appendChild(li);
-        });
-        updateSummary();
+    // Fetch existing student data from GitHub
+    async function loadStudents() {
+        try {
+            const response = await fetch(`https://raw.githubusercontent.com/${GITHUB_USERNAME}/${REPO_NAME}/${BRANCH}/${FILE_PATH}`);
+            if (response.ok) {
+                students = await response.json();
+                updateGradeList();
+            }
+        } catch (error) {
+            console.error("Error fetching student data:", error);
+        }
     }
 
     gradeForm.addEventListener("submit", function (event) {
@@ -34,8 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const grade = calculateGrade(mark);
         students.push({ name, mark, grade });
 
-        saveStudents();  // Save to localStorage
-        loadStudents();  // Update display
+        updateGradeList();
         gradeForm.reset();
     });
 
@@ -48,6 +52,16 @@ document.addEventListener("DOMContentLoaded", function () {
         return "U";
     }
 
+    function updateGradeList() {
+        gradeList.innerHTML = "";
+        students.forEach(student => {
+            const li = document.createElement("li");
+            li.textContent = `${student.name} - ${student.mark} - ${student.grade}`;
+            gradeList.appendChild(li);
+        });
+        updateSummary();
+    }
+
     function updateSummary() {
         const gradeCount = { A: 0, B: 0, C: 0, D: 0, E: 0, U: 0 };
         let totalMarks = 0;
@@ -57,9 +71,9 @@ document.addEventListener("DOMContentLoaded", function () {
             totalMarks += student.mark;
         });
 
-        const averageMark = (students.length > 0) ? (totalMarks / students.length).toFixed(2) : 0;
-        const highestMark = students.length > 0 ? Math.max(...students.map(s => s.mark)) : "N/A";
-        const lowestMark = students.length > 0 ? Math.min(...students.map(s => s.mark)) : "N/A";
+        const averageMark = students.length ? (totalMarks / students.length).toFixed(2) : 0;
+        const highestMark = students.length ? Math.max(...students.map(s => s.mark)) : "N/A";
+        const lowestMark = students.length ? Math.min(...students.map(s => s.mark)) : "N/A";
 
         summary.innerHTML = `
             <strong>A:</strong> ${gradeCount.A} | 
@@ -73,6 +87,50 @@ document.addEventListener("DOMContentLoaded", function () {
             <strong>Lowest Mark:</strong> ${lowestMark}
         `;
     }
+
+    // Save student data to GitHub
+    async function saveStudentsToGitHub() {
+        const fileContent = JSON.stringify(students, null, 2);
+        const encodedContent = btoa(unescape(encodeURIComponent(fileContent))); // Convert to Base64
+
+        try {
+            // Fetch the current file SHA (GitHub requires it for updates)
+            let sha = "";
+            const fileResponse = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`);
+            if (fileResponse.ok) {
+                const fileData = await fileResponse.json();
+                sha = fileData.sha;
+            }
+
+            // Send the update request to GitHub
+            const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`, {
+                method: "PUT",
+                headers: {
+                    "Authorization": `token ${GITHUB_TOKEN}`,
+                    "Accept": "application/vnd.github.v3+json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: "Updated student data",
+                    content: encodedContent,
+                    branch: BRANCH,
+                    sha: sha || undefined
+                })
+            });
+
+            if (response.ok) {
+                alert("Student data saved to GitHub!");
+            } else {
+                console.error("GitHub API error:", await response.json());
+                alert("Error saving to GitHub.");
+            }
+        } catch (error) {
+            console.error("Error saving students:", error);
+            alert("Error saving to GitHub.");
+        }
+    }
+
+    saveButton.addEventListener("click", saveStudentsToGitHub);
 
     loadStudents(); // Load saved data on page load
 });
