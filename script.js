@@ -2,7 +2,7 @@ const GITHUB_USERNAME = "inzz3";
 const REPO_NAME = "website";
 const FILE_PATH = "students.json"; // File where data will be saved
 const BRANCH = "main";
-const GITHUB_TOKEN = "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"; // Your GitHub token
+const GITHUB_TOKEN = "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"; // Your GitHub token
 
 document.addEventListener("DOMContentLoaded", function () {
     const gradeForm = document.getElementById("gradeForm");
