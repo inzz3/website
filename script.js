@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const gradeList = document.getElementById("gradeList");
     const summary = document.getElementById("summary");
 
+    // Load existing student data from localStorage (if any)
     let students = JSON.parse(localStorage.getItem("students")) || [];
 
     function saveStudents() {
@@ -33,8 +34,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const grade = calculateGrade(mark);
         students.push({ name, mark, grade });
 
-        saveStudents();
-        loadStudents();
+        saveStudents();  // Save to localStorage
+        loadStudents();  // Update display
         gradeForm.reset();
     });
 
@@ -73,5 +74,5 @@ document.addEventListener("DOMContentLoaded", function () {
         `;
     }
 
-    loadStudents();
+    loadStudents(); // Load saved data on page load
 });
