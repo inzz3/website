@@ -3,7 +3,21 @@ document.addEventListener("DOMContentLoaded", function () {
     const gradeList = document.getElementById("gradeList");
     const summary = document.getElementById("summary");
 
-    let students = [];
+    let students = JSON.parse(localStorage.getItem("students")) || [];
+
+    function saveStudents() {
+        localStorage.setItem("students", JSON.stringify(students));
+    }
+
+    function loadStudents() {
+        gradeList.innerHTML = "";
+        students.forEach(student => {
+            const li = document.createElement("li");
+            li.textContent = `${student.name} - ${student.mark} - ${student.grade}`;
+            gradeList.appendChild(li);
+        });
+        updateSummary();
+    }
 
     gradeForm.addEventListener("submit", function (event) {
         event.preventDefault();
@@ -19,9 +33,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const grade = calculateGrade(mark);
         students.push({ name, mark, grade });
 
-        updateGradeList();
-        updateSummary();
-
+        saveStudents();
+        loadStudents();
         gradeForm.reset();
     });
 
@@ -32,15 +45,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (mark >= 60) return "D";
         if (mark >= 50) return "E";
         return "U";
-    }
-
-    function updateGradeList() {
-        gradeList.innerHTML = "";
-        students.forEach(student => {
-            const li = document.createElement("li");
-            li.textContent = `${student.name} - ${student.grade}`;
-            gradeList.appendChild(li);
-        });
     }
 
     function updateSummary() {
@@ -68,4 +72,6 @@ document.addEventListener("DOMContentLoaded", function () {
             <strong>Lowest Mark:</strong> ${lowestMark}
         `;
     }
+
+    loadStudents();
 });
