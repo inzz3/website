@@ -2,7 +2,7 @@ const GITHUB_USERNAME = "inzz3";
 const REPO_NAME = "website";
 const FILE_PATH = "students.json"; // File where data will be saved
 const BRANCH = "main";
-const GITHUB_TOKEN = "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"; // Your GitHub token
+const GITHUB_TOKEN = "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"; // Your GitHub token
 
 document.addEventListener("DOMContentLoaded", function () {
     const gradeForm = document.getElementById("gradeForm");
@@ -15,10 +15,20 @@ document.addEventListener("DOMContentLoaded", function () {
     // Fetch student data from GitHub
     async function loadStudents() {
         try {
-            const response = await fetch(`https://raw.githubusercontent.com/${GITHUB_USERNAME}/${REPO_NAME}/${BRANCH}/${FILE_PATH}`);
+            const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`, {
+                headers: {
+                    "Authorization": `token ${GITHUB_TOKEN}`,
+                    "Accept": "application/vnd.github.v3+json"
+                }
+            });
+
             if (response.ok) {
-                students = await response.json();
+                const fileData = await response.json();
+                const decodedContent = atob(fileData.content); // Decode Base64
+                students = JSON.parse(decodedContent);
                 updateGradeList();
+            } else {
+                console.error("Error fetching student data:", await response.json());
             }
         } catch (error) {
             console.error("Error fetching student data:", error);
@@ -96,10 +106,22 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
             // Fetch the current file SHA (GitHub requires it for updates)
             let sha = "";
-            const fileResponse = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`);
+            const fileResponse = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`, {
+                headers: {
+                    "Authorization": `token ${GITHUB_TOKEN}`,
+                    "Accept": "application/vnd.github.v3+json"
+                }
+            });
+
             if (fileResponse.ok) {
                 const fileData = await fileResponse.json();
                 sha = fileData.sha;
+            } else if (fileResponse.status === 404) {
+                console.warn("File not found, creating a new one...");
+            } else {
+                console.error("GitHub API error:", await fileResponse.json());
+                alert("Error fetching file from GitHub.");
+                return;
             }
 
             // Send the update request to GitHub
