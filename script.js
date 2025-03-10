@@ -1,8 +1,8 @@
 const GITHUB_USERNAME = "inzz3";
 const REPO_NAME = "website";
-const FILE_PATH = "students.json"; // File to store data
+const FILE_PATH = "students.json"; // File where data will be saved
 const BRANCH = "main";
-const GITHUB_TOKEN = "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"; // Replace with your token
+const GITHUB_TOKEN = "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"; // Your GitHub token
 
 document.addEventListener("DOMContentLoaded", function () {
     const gradeForm = document.getElementById("gradeForm");
@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let students = [];
 
-    // Fetch existing student data from GitHub
+    // Fetch student data from GitHub
     async function loadStudents() {
         try {
             const response = await fetch(`https://raw.githubusercontent.com/${GITHUB_USERNAME}/${REPO_NAME}/${BRANCH}/${FILE_PATH}`);
